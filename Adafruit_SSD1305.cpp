@@ -382,7 +382,7 @@ void Adafruit_SSD1305::data(uint8_t c) {
 }
 
 void Adafruit_SSD1305::textbox(const char *text, const char *text2, uint16_t delay) {
-  textbox_clock = slowclock;
+  textbox_clock = read_clock_ms();
   strncpy(textbox_str, text, sizeof(textbox_str));
   strncpy(textbox_str2, text2, sizeof(textbox_str2));
   textbox_delay = delay;
@@ -399,7 +399,7 @@ void Adafruit_SSD1305::display(void) {
   }
   display_lock = true;
   if (textbox_enabled) {
-    if (clock_diff(textbox_clock, slowclock) < textbox_delay) {
+    if (clock_diff(textbox_clock, read_clock_ms()) < textbox_delay) {
       draw_textbox(textbox_str, textbox_str2);
     } else {
       textbox_enabled = false;
