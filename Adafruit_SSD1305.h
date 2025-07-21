@@ -6,21 +6,67 @@ This is a library for our Monochrome OLEDs based on SSD1305 drivers
 
 These displays use I2C or SPI to communicate
 
-Adafruit invests time and resources providing this open source code,
-please support Adafruit and open-source hardware by purchasing
+Adafruit invests time and resources providing this open source code, 
+please support Adafruit and open-source hardware by purchasing 
 products from Adafruit!
 
-Written by Limor Fried/Ladyada  for Adafruit Industries.
+Written by Limor Fried/Ladyada  for Adafruit Industries.  
 BSD license, check license.txt for more information
 All text above, and the splash screen must be included in any redistribution
 *********************************************************************/
 
-#include <Adafruit_GrayOLED.h>
+#pragma once
+
+#if ARDUINO >= 100
+ #include "Arduino.h"
+#else
+ #include "WProgram.h"
+#endif
+
+#include <Adafruit_GFX.h>
+#include "helpers.h"
+#define adagfx_swap(a, b) { uint8_t t = a; a = b; b = t; }
 
 #define BLACK 0
 #define WHITE 1
+#define INVERT 2
 
-#define SSD1305_I2C_ADDRESS 0x3C // 011110+SA0+RW - 0x3C or 0x3D
+/*=========================================================================
+    SSD1305 Displays
+    -----------------------------------------------------------------------
+    The driver is used in multiple displays (128x64, 128x32, etc.).
+    Select the appropriate display below to create an appropriately
+    sized framebuffer, etc.
+
+    SSD1305_128_64  128x64 pixel display
+
+    SSD1305_128_32  128x32 pixel display
+
+    You also need to set the LCDWIDTH and LCDHEIGHT defines to an 
+    appropriate size
+
+    -----------------------------------------------------------------------*/
+#define SSD1305_128_32
+//#define SSD1305_128_64
+/*=========================================================================*/
+
+#if defined SSD1305_128_64 && defined SSD1305_128_32
+  #error "Only one SSD1305 display can be specified at once in SSD1305.h"
+#endif
+#if !defined SSD1305_128_64 && !defined SSD1305_128_32
+  #error "At least one SSD1305 display must be specified in SSD1305.h"
+#endif
+
+#if defined SSD1305_128_64
+  #define SSD1305_LCDWIDTH                  128
+  #define SSD1305_LCDHEIGHT                 64
+#endif
+#if defined SSD1305_128_32
+  #define SSD1305_LCDWIDTH                  128
+  #define SSD1305_LCDHEIGHT                 32
+#endif
+
+#define SSD1305_I2C_ADDRESS   0x3C	// 011110+SA0+RW - 0x3C or 0x3D
 
 #define SSD1305_SETLOWCOLUMN 0x00
 #define SSD1305_SETHIGHCOLUMN 0x10
@@ -56,24 +102,53 @@ All text above, and the splash screen must be included in any redistribution
 #define SSD1305_SETCOMPINS 0xDA
 #define SSD1305_SETVCOMLEVEL 0xDB
 
-/*! The controller object for SSD1305 OLED displays */
-class Adafruit_SSD1305 : public Adafruit_GrayOLED {
-public:
-  Adafruit_SSD1305(uint16_t w, uint16_t h, TwoWire *twi = &Wire,
-                   int8_t rst_pin = -1, uint32_t preclk = 400000,
-                   uint32_t postclk = 100000);
-  Adafruit_SSD1305(uint16_t w, uint16_t h, int8_t mosi_pin, int8_t sclk_pin,
-                   int8_t dc_pin, int8_t rst_pin, int8_t cs_pin);
-  Adafruit_SSD1305(uint16_t w, uint16_t h, SPIClass *spi, int8_t dc_pin,
-                   int8_t rst_pin, int8_t cs_pin, uint32_t bitrate = 8000000UL);
-  ~Adafruit_SSD1305(void);
 
-  bool begin(uint8_t i2caddr = SSD1305_I2C_ADDRESS, bool reset = true);
-  void display();
-  void sleep();
-  void wake();
-
+class Adafruit_SSD1305 final : public Adafruit_GFX {
 private:
-  uint8_t page_offset = 0;
-  uint8_t column_offset = 0;
+  bool screen_saver_active = false;
+
+public:
+
+ Adafruit_SSD1305(int8_t SID, int8_t SCLK, int8_t DC, int8_t RST, int8_t CS) :sid(SID), sclk(SCLK), dc(DC), rst(RST), cs(CS), Adafruit_GFX(SSD1305_LCDWIDTH, SSD1305_LCDHEIGHT) {}
+
+ Adafruit_SSD1305(int8_t SID, int8_t SCLK, int8_t DC, int8_t RST) :sid(SID), sclk(SCLK), dc(DC), rst(RST), cs(-1), Adafruit_GFX(SSD1305_LCDWIDTH, SSD1305_LCDHEIGHT) {}
+
+ Adafruit_SSD1305(int8_t DC, int8_t RST, int8_t CS) :sid(-1), sclk(-1), dc(DC), rst(RST), cs(CS), Adafruit_GFX(SSD1305_LCDWIDTH, SSD1305_LCDHEIGHT) {}
+ Adafruit_SSD1305(int8_t RST) :sid(-1), sclk(-1), dc(-1), rst(RST), cs(-1), Adafruit_GFX(SSD1305_LCDWIDTH, SSD1305_LCDHEIGHT) {}
+  void begin();
+
+  void command(uint8_t c);
+  void data(uint8_t c);
+
+  void clearDisplay(void);
+  void invertDisplay(uint8_t i);
+  void setBrightness(uint8_t i);
+  uint8_t getBuffer(uint16_t i);
+  // get the pointer to the raw buffer
+  uint8_t* getBuffer();
+  bool redisplay = true;
+  bool screen_saver = false;
+
+  void textbox(const char *text, const char *text2, uint16_t delay = 800);
+  void display();
+
+  virtual void drawPixel(uint8_t x, uint8_t y, uint8_t color);
+
+  virtual void drawFastVLine(uint8_t x, uint8_t y, uint8_t h, uint8_t color);
+  void fillRect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color);
+  void fillScreen(uint8_t color);
+
+  bool textbox_enabled = false;
+private:
+  uint16_t textbox_delay;
+  uint16_t textbox_clock;
+  char textbox_str[17];
+  char textbox_str2[17];
+  uint8_t _i2caddr;
+  int8_t sid, sclk, dc, rst, cs;
+  void spixfer(uint8_t x);
+#ifdef __AVR__
+  volatile uint8_t *mosiport, *clkport;
+  uint8_t mosipinmask, clkpinmask;
+#endif
 };
