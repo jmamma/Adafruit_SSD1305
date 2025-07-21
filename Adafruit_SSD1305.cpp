@@ -51,6 +51,18 @@ extern const uint8_t PROGMEM font[];
 
 static uint8_t buffer[SSD1305_LCDHEIGHT * SSD1305_LCDWIDTH / 8] = {};
 
+void Adafruit_SSD1305::init_display() {
+  begin();
+  clearDisplay();
+  invertDisplay(0);
+  setRotation(2);
+  setTextSize(1);
+  setTextColor(WHITE, BLACK);
+  setCursor(0, 0);
+  setTextWrap(false);
+  display();
+}
+
 // the most basic function, set a single pixel
 void Adafruit_SSD1305::drawPixel(uint8_t x, uint8_t y, uint8_t color) {
   if (x >= width() || y >= height())

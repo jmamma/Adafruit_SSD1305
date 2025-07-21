@@ -141,6 +141,7 @@ public:
   bool textbox_enabled = false;
   void sleep();
   void wake();
+  void init_display();
 private:
   uint16_t textbox_delay;
   uint16_t textbox_clock;
