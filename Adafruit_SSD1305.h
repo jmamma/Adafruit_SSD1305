@@ -139,6 +139,8 @@ public:
   void fillScreen(uint8_t color);
 
   bool textbox_enabled = false;
+  void sleep();
+  void wake();
 private:
   uint16_t textbox_delay;
   uint16_t textbox_clock;

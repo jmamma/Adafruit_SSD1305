@@ -438,6 +438,14 @@ void Adafruit_SSD1305::display(void) {
   display_lock = false;
 }
 
+void Adafruit_SSD1305::wake() {
+  command(SSD1305_DISPLAYON);
+}
+
+void Adafruit_SSD1305::sleep() {
+  command(SSD1305_DISPLAYOFF);
+}
+
 // clear everything
 void Adafruit_SSD1305::clearDisplay(void) {
   memset(buffer, 0, (SSD1305_LCDWIDTH * SSD1305_LCDHEIGHT / 8));
