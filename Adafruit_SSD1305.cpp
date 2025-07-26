@@ -436,8 +436,13 @@ void Adafruit_SSD1305::display(void) {
 //      digitalWrite(cs, HIGH);
       digitalWrite(dc, HIGH);
       digitalWrite(cs, LOW);
-
+#ifndef MEGACOMMAND_SPI_LIBRARY
+      uint8_t dummy_buffer[128];
+      memcpy(dummy_buffer, p, 128);    // Copy the display data to the dummy buffer
+      SPI.transfer(dummy_buffer, 128); // Perform the SPI transfer
+#else
       SPI.transfer(p,128);
+#endif
       p += 128;
 
       digitalWrite(cs, HIGH);
