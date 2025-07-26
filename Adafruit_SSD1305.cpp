@@ -29,7 +29,6 @@ redistribution
 #include "Adafruit_SSD1305.h"
 #include "glcdfont.c"
 #include <SPI.h>
-#include <Wire.h>
 #include <stdlib.h>
 #include "DiagnosticPage.h"
 
