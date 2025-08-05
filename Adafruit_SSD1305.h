@@ -108,13 +108,19 @@ private:
   bool screen_saver_active = false;
 
 public:
+  // Initialize base class first, then members in declaration order
+  Adafruit_SSD1305(int8_t SID, int8_t SCLK, int8_t DC, int8_t RST, int8_t CS)
+    : Adafruit_GFX(SSD1305_LCDWIDTH, SSD1305_LCDHEIGHT), sid(SID), sclk(SCLK), dc(DC), rst(RST), cs(CS) {}
 
- Adafruit_SSD1305(int8_t SID, int8_t SCLK, int8_t DC, int8_t RST, int8_t CS) :sid(SID), sclk(SCLK), dc(DC), rst(RST), cs(CS), Adafruit_GFX(SSD1305_LCDWIDTH, SSD1305_LCDHEIGHT) {}
+  Adafruit_SSD1305(int8_t SID, int8_t SCLK, int8_t DC, int8_t RST)
+    : Adafruit_GFX(SSD1305_LCDWIDTH, SSD1305_LCDHEIGHT), sid(SID), sclk(SCLK), dc(DC), rst(RST), cs(-1) {}
 
- Adafruit_SSD1305(int8_t SID, int8_t SCLK, int8_t DC, int8_t RST) :sid(SID), sclk(SCLK), dc(DC), rst(RST), cs(-1), Adafruit_GFX(SSD1305_LCDWIDTH, SSD1305_LCDHEIGHT) {}
+  Adafruit_SSD1305(int8_t DC, int8_t RST, int8_t CS)
+    : Adafruit_GFX(SSD1305_LCDWIDTH, SSD1305_LCDHEIGHT), sid(-1), sclk(-1), dc(DC), rst(RST), cs(CS) {}
 
- Adafruit_SSD1305(int8_t DC, int8_t RST, int8_t CS) :sid(-1), sclk(-1), dc(DC), rst(RST), cs(CS), Adafruit_GFX(SSD1305_LCDWIDTH, SSD1305_LCDHEIGHT) {}
- Adafruit_SSD1305(int8_t RST) :sid(-1), sclk(-1), dc(-1), rst(RST), cs(-1), Adafruit_GFX(SSD1305_LCDWIDTH, SSD1305_LCDHEIGHT) {}
+  Adafruit_SSD1305(int8_t RST)
+    : Adafruit_GFX(SSD1305_LCDWIDTH, SSD1305_LCDHEIGHT), sid(-1), sclk(-1), dc(-1), rst(RST), cs(-1) {}
+
   void begin();
 
   void command(uint8_t c);
