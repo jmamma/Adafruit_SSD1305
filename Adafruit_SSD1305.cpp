@@ -393,9 +393,6 @@ bool display_lock = false;
 void Adafruit_SSD1305::display(void) {
   if (display_lock) { return; }
 
-  if (screen_saver && screen_saver_active) {
-    return;
-  }
   display_lock = true;
   if (textbox_enabled) {
     if (clock_diff(textbox_clock, read_clock_ms()) < textbox_delay) {
@@ -411,12 +408,6 @@ void Adafruit_SSD1305::display(void) {
     diag_page.draw();
   }
 #endif
-
-  if(screen_saver) {
-    clearDisplay();
-  }
-
-  screen_saver_active = screen_saver;
 
   uint16_t i = 0;
   uint8_t *p = buffer;
@@ -455,11 +446,15 @@ void Adafruit_SSD1305::display(void) {
 }
 
 void Adafruit_SSD1305::wake() {
+  SD.setDedicatedSpi(false);
   command(SSD1305_DISPLAYON);
+  SD.setDedicatedSpi(true);
 }
 
 void Adafruit_SSD1305::sleep() {
+  SD.setDedicatedSpi(false);
   command(SSD1305_DISPLAYOFF);
+  SD.setDedicatedSpi(true);
 }
 
 // clear everything

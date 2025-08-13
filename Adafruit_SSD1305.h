@@ -104,9 +104,6 @@ All text above, and the splash screen must be included in any redistribution
 
 
 class Adafruit_SSD1305 final : public Adafruit_GFX {
-private:
-  bool screen_saver_active = false;
-
 public:
   // Initialize base class first, then members in declaration order
   Adafruit_SSD1305(int8_t SID, int8_t SCLK, int8_t DC, int8_t RST, int8_t CS)
@@ -133,7 +130,6 @@ public:
   // get the pointer to the raw buffer
   uint8_t* getBuffer();
   bool redisplay = true;
-  bool screen_saver = false;
 
   void textbox(const char *text, const char *text2, uint16_t delay = 800);
   void display();
