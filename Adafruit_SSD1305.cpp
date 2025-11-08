@@ -380,13 +380,37 @@ void Adafruit_SSD1305::data(uint8_t c) {
 #endif
 }
 
-void Adafruit_SSD1305::textbox(const char *text, const char *text2, uint16_t delay) {
+void Adafruit_SSD1305::init_textbox() {
+  // 1. Ensure the member variable buffers are safely null-terminated
+  textbox_str[sizeof(textbox_str) - 1] = '\0';
+  textbox_str2[sizeof(textbox_str2) - 1] = '\0';
+
+  // 2. Set up the display state
   textbox_clock = read_clock_ms();
-  strncpy(textbox_str, text, sizeof(textbox_str));
-  strncpy(textbox_str2, text2, sizeof(textbox_str2));
-  textbox_delay = delay;
   textbox_enabled = true;
 }
+
+void Adafruit_SSD1305::textbox(const char *text, const char *text2) {
+  // Copy strings from RAM into member variables
+  strncpy(textbox_str, text, sizeof(textbox_str));
+  strncpy(textbox_str2, text2, sizeof(textbox_str2));
+  init_textbox();
+}
+
+void Adafruit_SSD1305::textbox_P(const char *text_P, const char *text2_P) {
+  // Use the PROGMEM-aware version of strncpy to copy from flash
+  strncpy_P(textbox_str, text_P, sizeof(textbox_str));
+  strncpy_P(textbox_str2, text2_P, sizeof(textbox_str2));
+  init_textbox();
+}
+
+void Adafruit_SSD1305::textbox_P(const char *text_P) {
+  // Copy strings from RAM into member variables
+  strncpy_P(textbox_str, text_P, sizeof(textbox_str));
+  textbox_str2[0] = '\0';
+  init_textbox();
+}
+
 
 bool display_lock = false;
 
@@ -395,7 +419,7 @@ void Adafruit_SSD1305::display(void) {
 
   display_lock = true;
   if (textbox_enabled) {
-    if (clock_diff(textbox_clock, read_clock_ms()) < textbox_delay) {
+    if (clock_diff(textbox_clock, read_clock_ms()) < delay_time) {
       draw_textbox(textbox_str, textbox_str2);
     } else {
       textbox_enabled = false;

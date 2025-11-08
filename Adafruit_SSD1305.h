@@ -131,7 +131,13 @@ public:
   uint8_t* getBuffer();
   bool redisplay = true;
 
-  void textbox(const char *text, const char *text2, uint16_t delay = 800);
+  static constexpr uint16_t delay_time = 800;
+
+  void init_textbox();
+  void textbox(const char *text, const char *text2);
+  void textbox_P(const char *text_P, const char *text2_P);
+  void textbox_P(const char *text_P);
+
   void display();
 
   virtual void drawPixel(uint8_t x, uint8_t y, uint8_t color);
@@ -145,7 +151,6 @@ public:
   void wake();
   void init_display();
 private:
-  uint16_t textbox_delay;
   uint16_t textbox_clock;
   char textbox_str[17];
   char textbox_str2[17];
