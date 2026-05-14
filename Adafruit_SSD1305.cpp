@@ -51,8 +51,8 @@ extern const uint8_t PROGMEM font[];
 namespace {
 
 #ifdef __AVR__
-inline void oled_spi_acquire() { mcl_oled_spi_acquire(); }
-inline void oled_spi_release() { mcl_oled_spi_release(); }
+inline void oled_spi_acquire() { mcl_oled_set_sd_dedicated_spi(false); }
+inline void oled_spi_release() { mcl_oled_set_sd_dedicated_spi(true); }
 inline void oled_pins_output(int8_t, int8_t, int8_t) { mcl_oled_pins_output(); }
 inline void oled_reset_high(int8_t) { mcl_oled_reset_high(); }
 inline void oled_reset_low(int8_t) { mcl_oled_reset_low(); }
