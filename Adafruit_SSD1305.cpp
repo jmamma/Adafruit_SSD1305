@@ -66,7 +66,7 @@ void Adafruit_SSD1305::init_display() {
 void Adafruit_SSD1305::drawPixel(uint8_t x, uint8_t y, uint8_t color) {
   if (x >= SSD1305_LCDWIDTH || y >= SSD1305_LCDHEIGHT)
     return;
-  uint16_t index = x + ((uint16_t)(y & 0xF8) << 4);
+  uint16_t index = ((uint16_t)(y & 0xF8) << 4) | x;
   uint8_t bit = _bvmasks[y & 7];
 
   if (color == WHITE)
@@ -86,7 +86,7 @@ void Adafruit_SSD1305::drawFastVLine(uint8_t x, uint8_t y, uint8_t h,
     h = SSD1305_LCDHEIGHT - y;
   }
  // initial pointer position
-  uint8_t *p = buffer + x + (y / 8) * SSD1305_LCDWIDTH;
+  uint8_t *p = buffer + (((uint16_t)(y & 0xF8) << 4) | x);
 
   // 1. upper part
   uint8_t h_ = 8 - (y & 0x07);
@@ -126,7 +126,7 @@ void Adafruit_SSD1305::drawFastVLine(uint8_t x, uint8_t y, uint8_t h,
 
   // 3. lower part
   if (h != 0) {
-    uint8_t mask = ((1 << h) - 1);
+    uint8_t mask = _bvmasks[h] - 1;
     if (color == WHITE) {
       *p |= mask;
     } else if (color == BLACK) {
@@ -154,7 +154,7 @@ void Adafruit_SSD1305::fillRect(uint8_t x, uint8_t y, uint8_t w, uint8_t h,
     w = SSD1305_LCDWIDTH - x;
   }
   // initial pointer position
-  uint8_t *p = buffer + x + (y / 8) * SSD1305_LCDWIDTH;
+  uint8_t *p = buffer + (((uint16_t)(y & 0xF8) << 4) | x);
   const uint8_t xend = x + w;
 
   // 1. upper part
@@ -202,7 +202,7 @@ void Adafruit_SSD1305::fillRect(uint8_t x, uint8_t y, uint8_t w, uint8_t h,
 
   // 3. lower part
   if (h != 0) {
-    uint8_t mask = ((1 << h) - 1);
+    uint8_t mask = _bvmasks[h] - 1;
     uint8_t *px = p;
     for (uint8_t x_ = x; x_ < xend; ++x_) {
       if (color == WHITE) {
