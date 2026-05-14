@@ -66,8 +66,8 @@ void Adafruit_SSD1305::init_display() {
 void Adafruit_SSD1305::drawPixel(uint8_t x, uint8_t y, uint8_t color) {
   if (x >= SSD1305_LCDWIDTH || y >= SSD1305_LCDHEIGHT)
     return;
-  uint16_t index = x + (y / 8) * SSD1305_LCDWIDTH;
-  uint8_t bit = _BV(y & 7);
+  uint16_t index = x + ((uint16_t)(y & 0xF8) << 4);
+  uint8_t bit = _bvmasks[y & 7];
 
   if (color == WHITE)
     buffer[index] |= bit;
