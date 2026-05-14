@@ -42,9 +42,45 @@ SPISettings oledspi = SPISettings(16000000, MSBFIRST, SPI_MODE0);
 #define _BV(bit) (1 << (bit))
 #endif
 
-#include "MCLSd.h"
+#ifdef __AVR__
+#include "MclOledPlatform.h"
+#endif
 // a 5x7 font table
 extern const uint8_t PROGMEM font[];
+
+namespace {
+
+#ifdef __AVR__
+inline void oled_spi_acquire() { mcl_oled_spi_acquire(); }
+inline void oled_spi_release() { mcl_oled_spi_release(); }
+inline void oled_pins_output(int8_t, int8_t, int8_t) { mcl_oled_pins_output(); }
+inline void oled_reset_high(int8_t) { mcl_oled_reset_high(); }
+inline void oled_reset_low(int8_t) { mcl_oled_reset_low(); }
+inline void oled_cs_high(int8_t) { mcl_oled_cs_high(); }
+inline void oled_cs_low(int8_t) { mcl_oled_cs_low(); }
+inline void oled_dc_high(int8_t) { mcl_oled_dc_high(); }
+inline void oled_dc_low(int8_t) { mcl_oled_dc_low(); }
+#else
+inline void oled_spi_acquire() {}
+inline void oled_spi_release() {}
+inline void oled_pin_output(int8_t pin) { pinMode(pin, OUTPUT); }
+inline void oled_pins_output(int8_t dc, int8_t cs, int8_t rst) {
+  oled_pin_output(dc);
+  oled_pin_output(cs);
+  oled_pin_output(rst);
+}
+inline void oled_pin_write(int8_t pin, bool level) {
+  digitalWrite(pin, level ? HIGH : LOW);
+}
+inline void oled_reset_high(int8_t rst) { oled_pin_write(rst, true); }
+inline void oled_reset_low(int8_t rst) { oled_pin_write(rst, false); }
+inline void oled_cs_high(int8_t cs) { oled_pin_write(cs, true); }
+inline void oled_cs_low(int8_t cs) { oled_pin_write(cs, false); }
+inline void oled_dc_high(int8_t dc) { oled_pin_write(dc, true); }
+inline void oled_dc_low(int8_t dc) { oled_pin_write(dc, false); }
+#endif
+
+} // namespace
 
 // the memory buffer for the LCD
 
@@ -232,23 +268,21 @@ void Adafruit_SSD1305::fillScreen(uint8_t color) {
 }
 
 void Adafruit_SSD1305::begin() {
-    SD.setDedicatedSpi(false);
+    oled_spi_acquire();
    // set pin directions
    // hardware SPI
     SPI.begin();
-    pinMode(dc, OUTPUT);
-    pinMode(cs, OUTPUT);
-    pinMode(rst, OUTPUT);
+    oled_pins_output(dc, cs, rst);
 
-    digitalWrite(rst, HIGH);
+    oled_reset_high(rst);
     // VDD (3.3V) goes high at start, lets just chill for a ms
     delay(1);
     // bring reset low
-    digitalWrite(rst, LOW);
+    oled_reset_low(rst);
     // wait 10ms
     delay(10);
     // bring out of reset
-    digitalWrite(rst, HIGH);
+    oled_reset_high(rst);
 #if defined SSD1305_128_32
   // Init sequence for 128x32 OLED module
   command(SSD1305_DISPLAYOFF);          // 0xAE
@@ -323,7 +357,7 @@ void Adafruit_SSD1305::begin() {
 #endif
 
   command(SSD1305_DISPLAYON); //--turn on oled panel
-   SD.setDedicatedSpi(true);
+   oled_spi_release();
 }
 
 void Adafruit_SSD1305::invertDisplay(uint8_t i) {
@@ -338,8 +372,8 @@ void Adafruit_SSD1305::command(uint8_t c) {
 
     // SPI of sorts
 
-    digitalWrite(cs, HIGH);
-    digitalWrite(dc, LOW);
+    oled_cs_high(cs);
+    oled_dc_low(dc);
     delay(1);
 #ifdef SPI_HAS_TRANSACTION
       SPI.beginTransaction(oledspi);
@@ -347,9 +381,9 @@ void Adafruit_SSD1305::command(uint8_t c) {
       SPI.setDataMode(SPI_MODE0);
       SPI.setClockDivider(ADAFRUIT_SSD1305_SPI);
 #endif
-    digitalWrite(cs, LOW);
+    oled_cs_low(cs);
     SPI.transfer(c);
-    digitalWrite(cs, HIGH);
+    oled_cs_high(cs);
 
 #ifdef SPI_HAS_TRANSACTION
       SPI.endTransaction(); // release the SPI bus
@@ -361,8 +395,8 @@ uint8_t* Adafruit_SSD1305::getBuffer() { return buffer; }
 
 void Adafruit_SSD1305::data(uint8_t c) {
     // SPI of sorts
-    digitalWrite(cs, HIGH);
-    digitalWrite(dc, HIGH);
+    oled_cs_high(cs);
+    oled_dc_high(dc);
 
 #ifdef SPI_HAS_TRANSACTION
       SPI.beginTransaction(oledspi);
@@ -371,9 +405,9 @@ void Adafruit_SSD1305::data(uint8_t c) {
       SPI.setClockDivider(ADAFRUIT_SSD1305_SPI);
 #endif
 
-    digitalWrite(cs, LOW);
+    oled_cs_low(cs);
     SPI.transfer(c);
-    digitalWrite(cs, HIGH);
+    oled_cs_high(cs);
 
 #ifdef SPI_HAS_TRANSACTION
       SPI.endTransaction(); // release the SPI bus
@@ -426,7 +460,7 @@ void Adafruit_SSD1305::display(void) {
     }
   }
   //For dedicated SPI we do this.
-  SD.setDedicatedSpi(false);
+  oled_spi_acquire();
 #ifdef ENABLE_DIAG_LOGGING
   if (diag_page.is_active()) {
     diag_page.draw();
@@ -447,9 +481,9 @@ void Adafruit_SSD1305::display(void) {
         SPI.setClockDivider(ADAFRUIT_SSD1305_SPI);
 #endif
 
-//      digitalWrite(cs, HIGH);
-      digitalWrite(dc, HIGH);
-      digitalWrite(cs, LOW);
+//      oled_cs_high(cs);
+      oled_dc_high(dc);
+      oled_cs_low(cs);
 #ifndef MEGACOMMAND_SPI_LIBRARY
       uint8_t dummy_buffer[128];
       memcpy(dummy_buffer, p, 128);    // Copy the display data to the dummy buffer
@@ -459,25 +493,25 @@ void Adafruit_SSD1305::display(void) {
 #endif
       p += 128;
 
-      digitalWrite(cs, HIGH);
+      oled_cs_high(cs);
 #ifdef SPI_HAS_TRANSACTION
         SPI.endTransaction(); // release the SPI bus
 #endif
   }
-  SD.setDedicatedSpi(true);
+  oled_spi_release();
   display_lock = false;
 }
 
 void Adafruit_SSD1305::wake() {
-  SD.setDedicatedSpi(false);
+  oled_spi_acquire();
   command(SSD1305_DISPLAYON);
-  SD.setDedicatedSpi(true);
+  oled_spi_release();
 }
 
 void Adafruit_SSD1305::sleep() {
-  SD.setDedicatedSpi(false);
+  oled_spi_acquire();
   command(SSD1305_DISPLAYOFF);
-  SD.setDedicatedSpi(true);
+  oled_spi_release();
 }
 
 // clear everything
